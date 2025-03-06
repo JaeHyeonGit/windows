@@ -1,0 +1,116 @@
+echo "Script Start!"
+$prefix=get-date -format "yyMMdd_HHmm"
+$filename=echo $prefix"_OS_Log"
+echo "============================================" >> $filename
+echo "   Windows Information Result   " > $filename
+echo "============================================" >> $filename
+echo "" >> $filename
+chcp 65001
+
+echo "1.wmic os get lastbootuptime" >> $filename
+Get-WmiObject win32_operatingsystem | select csname, @{LABEL='LastBootUpTime';EXPRESSION={$*.ConverttoDateTime($*.lastbootuptime)}} >> $filename
+echo "" >> $filename
+
+echo "2.Date">> $filename
+get-date -format "yyyy-MM-dd HH:mm:ss">> $filename
+echo "" >> $filename
+
+echo 3.hostname >> $filename
+hostname >> $filename
+echo "" >> $filename
+
+echo 4.C:\Windows\System32\drivers\etc\hosts >> $filename
+type C:\Windows\System32\drivers\etc\hosts >> $filename
+echo "" >> $filename
+
+echo 5.systeminfo >> $filename
+systeminfo |ft >> $filename
+echo "" >> $filename
+
+echo "6.wmic useraccount list brief" >> $filename
+wmic useraccount list brief >> $filename
+echo "" >> $filename
+
+echo "7.tasklist /v" >> $filename
+tasklist /v >> $filename
+echo "" >> $filename
+
+echo "8.tasklist /svc" >> $filename
+tasklist /svc >> $filename
+echo "" >> $filename
+
+echo 9.get-service >> $filename
+Get-Service >> $filename
+echo "" >> $filename
+
+echo "10.Server Restart Auto Start Jobs" >> $filename
+echo "10-1.Service is-enabled List" >> $filename
+echo "==================================================" >> $filename
+Get-Service |select -property name,starttype |findstr Automatic >> $filename
+echo "" >> $filename
+
+echo "10-2.Scheduled Job List" >> $filename
+echo "==================================================" >> $filename
+Get-ScheduledJob >> $filename
+echo "" >> $filename
+
+echo 11.GET-Disk >> $filename
+GET-Disk >> $filename
+echo "" >> $filename
+
+echo "12.Disk Check" >> $filename
+Get-WmiObject -Class Win32_LogicalDisk |
+Select-Object -Property DeviceID, VolumeName, @{Label=”FreeSpace (Gb)”; expression={($*.FreeSpace/1GB).ToString(‘F2’)}},
+@{Label=”Total (Gb)”; expression={($*.Size/1GB).ToString(‘F2’)}},
+@{label=”FreePercent”; expression={[Math]::Round(($*.freespace / $*.size) * 100, 2)}}|ft >> $filename
+echo "" >> $filename
+
+echo "13.ipconfig /all" >> $filename
+ipconfig /all >> $filename
+echo "" >> $filename
+
+echo "14.netsh interface ip show route" >> $filename
+netsh interface ip show route >> $filename
+echo "" >> $filename
+
+echo "15.Network interface Show" >> $filename
+Get-NetIPAddress |Where-Object AddressFamily -eq IPv4 | ft InterfaceAlias, ipaddress >> $filename
+echo "" >> $filename
+
+echo "16.LISTEN and EST Check" >> $filename
+echo "16-1.Netstat LISTEN" >> $filename
+echo "============================================" >> $filename
+Get-NetTCPConnection -State LISTEN | Select-Object -Property LocalAddress,LocalPort,RemoteAddress,RemotePort,State,@{name="ProcessName";expression={(Get-Process -Id $_.OwningProcess).Path}} |ft >> $filename
+echo "" >> $filename
+
+echo "16-2.Netstat Established" >> $filename
+echo "============================================" >> $filename
+Get-NetTCPConnection -State Established | Select-Object -Property LocalAddress,LocalPort,RemoteAddress,RemotePort,State,@{name="ProcessName";expression={(Get-Process -Id $_.OwningProcess).Path}} |ft >> $filename
+echo "" >> $filename
+
+echo "17.route print" >> $filename
+route print >> $filename
+echo "" >> $filename
+
+echo "[18.GW](http://18.gw/) Ping" >> $filename
+$GW=Get-NetRoute -DestinationPrefix 0.0.0.0/0 | Select-Object -Expand NextHop
+ping -n 3 $GW >> $filename
+echo $GW >> $filename
+echo "" >> $filename
+
+echo "19.Sofware Installed list" >> $filename
+Get-WmiObject -Class Win32_Product | Select-Object -Property Name, Version >> $filename
+echo "" >> $filename
+
+echo "[20.net](http://20.net/) accounts" >> $filename
+net accounts >> $filename
+echo "" >> $filename
+
+<# Local Policy
+Remote Policy
+secedit /export /cfg c:\policy.inf; cat c:\policy.inf |findstr "Password" >> $filename
+#>
+
+chcp 1252
+
+echo "Script Finished:D"
