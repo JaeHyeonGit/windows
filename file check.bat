@@ -7,8 +7,8 @@ chcp 65001  nul
 setlocal enabledelayedexpansion
 
  텔레그램 설정
-set BOT_TOKEN=6994882583AAF3tbv2XpBvO3_TEkSxwS6sL6mJ5qygv3o
-set CHAT_ID=-1002073425700
+set BOT_TOKEN=
+set CHAT_ID=
 
  오늘 날짜를 YYYY-MM-DD 형식으로 설정
 for f tokens=2 delims== %%i in ('wmic os get localdatetime value') do set datetime=%%i
